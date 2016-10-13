@@ -4,58 +4,52 @@ const { Database } = require('sqlite3').verbose();
 const db = new Database('db/Chinook_Sqlite.sqlite');
 const Table = require('cli-table');
 
-db.serialize( () => {
 
-  //Query one
-  // db.all(`
-  //   SELECT  Customer.FirstName || ' ' || Customer.LastName AS FullName,
-  //           Customer.CustomerId,
-  //           Customer.Country
-  //   FROM Customer
-  //   WHERE Customer.Country IS NOT 'USA'
-  // `, (err, customers) => {
-  //   console.log("Test customers", customers);
-  // });
-
-  //Query Two from nodemilestones
-  // db.each(`
-  //   SELECT  Customer.FirstName || ' ' || Customer.LastName AS FullName,
-  //           Customer.CustomerId,
-  //           Customer.Country
-  //   FROM Customer
-  //   WHERE Customer.Country IS 'Brazil'
-  // `, (err, { CustomerId, FullName, Country }) => {
-  //     console.log(`${CustomerId}, ${FullName}, (${Country})`);
-  // });
-
-  //Query Three from nodemilestones
-  // let table = new Table({ head: ["InvoiceId", "Customer Name", "InvoiceDate", "Billing Country"] });
-  // db.each(`
-  //   SELECT FirstName || ' ' || Lastname AS FullName,
-  //     InvoiceId,
-  //     InvoiceDate,
-  //     BillingCountry
-  //   FROM Invoice
-  //   JOIN Customer ON Invoice.CustomerID = Customer.CustomerId
-  //   WHERE Customer.Country = 'Brazil'
-  //   ORDER BY InvoiceId ASC
-  // `, (err, { FullName, InvoiceId, InvoiceDate, BillingCountry }) => {
-  //
-  //   table.push( [InvoiceId, FullName, InvoiceDate, BillingCountry] );
-  //
-  // }, () => console.log(table.toString()));
-
-
-  //Query Four from nodemilestones
-  let table4 = new Table({ head: ['Fullname'] });
-  db.each(`
-    SELECT FirstName || ' ' || Lastname AS 'Name'
-    FROM Employee
-    WHERE Employee.Title = 'Sales Support Agent'
-  `, (err, { Name }) => {
-    table4.push([Name]);
-  }, () => console.log(table4.toString()));
-
+// Require knex and pass in the connection options obj
+const knex = require('knex')({
+  client: 'sqlite3',
+  connection: {
+    filename: 'db/Chinook_Sqlite.sqlite'
+  },
+  useNullAsDefault: true
 });
 
-db.close();
+// Using knex to query a sqlite3 Database
+// 5. Provide a query showing a unique list of billing countries from the Invoice table.
+// knex.select().from('Invoice')
+// .distinct('BillingCountry')
+// .orderBy('BillingCountry')
+// .then((collection) => {
+//   console.log(collection);
+// })
+
+// 6. Provide a query showing the invoices of customers who are from Brazil
+// knex.select().from('Invoice')
+// .where('BillingCountry', 'Brazil')
+// .then((list) => {
+//   console.log("Test list", list);
+// });
+
+// 7. Provide a query that shows the invoices associated with each sales agent. The resultant table should include the Sales Agent's full name.
+// knex.select('Employee.FirstName', 'Employee.LastName')
+// .from('Invoice')
+// .innerJoin('Customer', 'Invoice.CustomerId', 'Customer.CustomerId')
+// .innerJoin('Employee', 'Customer.SupportRepId', 'Employee.EmployeeId')
+// .then((list) => {
+//   console.log("Test list", list);
+// })
+
+// 8. Provide a query that shows the Invoice Total, Customer name, Country and Sale Agent name for all invoices and customers.
+knex.select(knex.raw(`Employee.FirstName || ' ' || Employee.LastName as Salesagent`))
+.select(knex.raw(`Customer.FirstName || ' ' || Customer.LastName as CustomerName`))
+.select('Customer.Country')
+.sum('Invoice.Total as Total')
+.from('Invoice')
+.join('Customer', 'Invoice.CustomerId', 'Customer.CustomerId')
+.join('Employee', 'Customer.SupportRepId', 'Employee.EmployeeId')
+.groupBy('Invoice.Total')
+.then((list) => {
+  console.log("Test list", list);
+});
+
+knex.destroy();

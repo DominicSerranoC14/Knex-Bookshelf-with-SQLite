@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/DominicSerranoC14/SQLite-Nodejs-101#readme",
   "dependencies": {
+    "knex": "^0.12.5",
     "sqlite3": "^3.1.6"
   }
 }
